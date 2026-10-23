@@ -2,7 +2,7 @@
 
 A cozy 3D sorting puzzle for the browser, built with three.js, TypeScript and Vite.
 
-Tap the clutter in a room to tidy it. Each item flies into the open box for its category (Snacks, Stationery, Electronics …). If no open box takes it, it waits in the tray. When a box fills it closes and the next category's box opens in its place, pulling any matching items out of the tray. Items with something resting on top can't be picked until that's cleared. The tray holds 5 items; when it's full and nothing you can reach fits an open box, you're out of space.
+Tap the clutter in a room to tidy it. Each item flies into the open box for its category (Snacks, Stationery, Electronics …). If no open box takes it, it waits in the tray. When a box fills it closes and the next category's box opens in its place, pulling any matching items out of the tray. Items with something resting on top can't be picked until that's cleared. The tray holds 5 items; filling the last slot loses the level (a booster can rescue you).
 
 Boosters: **Return** puts the last 3 tray items back in the room (2 per level), the locked **+** tray slots add space, **Extra box** opens a third box early, and **Hint** points at a good move (3 per level, free). Finish without Return/slots/box for 3 stars.
 

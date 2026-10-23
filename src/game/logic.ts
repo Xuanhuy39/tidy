@@ -35,7 +35,7 @@ export type TapResult = { ok: true; events: GameEvent[] } | { ok: false; reason:
 /**
  * The rules, with no rendering. Tapping a free item sends it to an open box of its
  * category, or else to the tray. A full box closes and the next category opens in its
- * slot, pulling matching items out of the tray. Stuck = tray full and no free item fits a box.
+ * slot, pulling matching items out of the tray. Filling the last tray slot loses.
  */
 export class Game {
   readonly level: LevelDef;
@@ -217,7 +217,7 @@ export class Game {
       events.push({ type: 'won' });
       return;
     }
-    if (this.tray.length >= this.traySize && this.hint() === null) {
+    if (this.tray.length >= this.traySize) {
       this.status = 'lost';
       events.push({ type: 'lost' });
     }

@@ -45,7 +45,7 @@ describe('rules', () => {
     expect(g.status).toBe('won');
   });
 
-  it('loses when the tray is full and nothing fits a box', () => {
+  it('loses as soon as the tray is full', () => {
     const level: LevelDef = {
       ...tiny,
       queue: ['snacks', 'stationery', 'electronics'],
@@ -57,15 +57,15 @@ describe('rules', () => {
       ],
     };
     const g = new Game(level);
-    // Stationery is blocked by a snack; fill the tray with electronics first.
     for (let i = 1; i <= 4; i++) g.tap(`e${i}`);
     expect(g.status).toBe('playing');
     const last = g.tap('e5');
-    expect(last.ok).toBe(true);
-    expect(g.status).toBe('playing'); // snacks still fit
-    g.tap('s');
-    g.tap('u');
-    expect(g.status).not.toBe('lost');
+    expect(last.ok && last.events.at(-1)).toEqual({ type: 'lost' });
+    expect(g.status).toBe('lost'); // even though the snack would still fit
+    expect(g.tap('s')).toEqual({ ok: false, reason: 'over' });
+    // A booster slot gets you going again.
+    expect(g.addTraySlot()).toEqual([{ type: 'traySize', size: 6 }]);
+    expect(g.status).toBe('playing');
   });
 
   it('boosters: extra slot, extra box and return', () => {

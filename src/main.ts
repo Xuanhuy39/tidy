@@ -172,6 +172,7 @@ async function tapItem(id: string): Promise<void> {
       await hud.fly(url, rect, hud.slotEl(first.index));
       hud.fillSlot(first.index, { url, cat: game.def(id).cat });
       sfx.tray();
+      if (game.status === 'playing' && game.tray.length === game.traySize - 1) hud.toast('Careful — one tray slot left!');
     }
   })();
   flights.push(flight);
@@ -349,7 +350,7 @@ function showMenu(): void {
     `<div class="logo">Tidy Up!</div>
      <p class="tagline">A cozy sorting puzzle</p>
      <div class="level-list">${cards}</div>
-     <div class="how">Tap items to drop them into matching boxes. Items with nothing to go in wait in the tray — don't let it fill up! Things underneath can't be picked until what's on top is cleared.</div>
+     <div class="how">Tap items to drop them into matching boxes. Items with nothing to go in wait in the tray — if the tray fills up, you lose! Things underneath can't be picked until what's on top is cleared.</div>
      <button class="sound-toggle">${sfx.muted ? '🔇 Sound off' : '🔊 Sound on'}</button>`,
     [],
     'menu',
@@ -430,13 +431,14 @@ function showLose(): void {
   running = false;
   sfx.lose();
   const canSlot = game.traySize < MAX_TRAY;
-  const canBox = game.boxSlots < MAX_BOXES && game.queue.length > 0;
+  // An extra box only rescues you if the next category pulls something out of the tray.
+  const canBox = game.boxSlots < MAX_BOXES && game.tray.some((id) => game.def(id).cat === game.queue[0]);
   const canReturn = returnsLeft > 0 && game.tray.length > 0;
   const resumeTimer = () => {
     running = true;
     startTime = performance.now() - elapsed * 1000;
   };
-  closeOverlay = overlay(hudRoot, `<h2>Out of space!</h2><p>The tray is full and nothing fits an open box.</p>`, [
+  closeOverlay = overlay(hudRoot, `<h2>Tray full!</h2><p>Every tray slot is taken. Use a booster to keep going, or try again.</p>`, [
     ...(canSlot ? [{ label: '+1 Tray slot', kind: 'secondary' as const, onClick: () => void useSlot().then(resumeTimer) }] : []),
     ...(canReturn ? [{ label: `↩ Return 3 items (${returnsLeft} left)`, kind: 'secondary' as const, onClick: () => void useReturn().then(resumeTimer) }] : []),
     ...(canBox ? [{ label: '+ Extra box', kind: 'secondary' as const, onClick: () => void useBox().then(resumeTimer) }] : []),
