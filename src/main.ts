@@ -53,20 +53,15 @@ const thumb = (id: string) => {
 
 // ---------- Layout ----------
 
-const wide = window.matchMedia('(min-width: 900px) and (min-aspect-ratio: 5/4)');
-wide.addEventListener('change', () => layout());
+const appEl = document.getElementById('app')!;
 
+/** Fit the room between the HUD's top and bottom parts, in the portrait frame's own coordinates. */
 function layout(): void {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  if (wide.matches) {
-    const hidden = hud.top.classList.contains('hidden');
-    const left = hidden ? 0 : hud.top.getBoundingClientRect().right + 24;
-    stage.resize(w, h, { x: left, y: 24, w: w - left - 24, h: h - 48 });
-    return;
-  }
-  const top = hud.top.classList.contains('hidden') ? 0 : hud.top.getBoundingClientRect().bottom + 6;
-  const bottom = hud.bottom.classList.contains('hidden') ? h : hud.bottom.getBoundingClientRect().top - 4;
+  const frame = appEl.getBoundingClientRect();
+  const w = frame.width;
+  const h = frame.height;
+  const top = hud.top.classList.contains('hidden') ? 0 : hud.top.getBoundingClientRect().bottom - frame.top + 6;
+  const bottom = hud.bottom.classList.contains('hidden') ? h : hud.bottom.getBoundingClientRect().top - frame.top - 4;
   stage.resize(w, h, { x: 8, y: top, w: w - 16, h: Math.max(100, bottom - top) });
 }
 window.addEventListener('resize', layout);

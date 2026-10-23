@@ -24,7 +24,7 @@ body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: #f7c66b;
+  background: radial-gradient(circle at 50% 30%, #5a4232, #2a1f19 75%);
   font-family: 'Fredoka', system-ui, sans-serif;
   color: var(--ink);
   user-select: none;
@@ -32,9 +32,20 @@ body {
   touch-action: none;
 }
 
+/* The game is always a portrait phone-shaped frame; on wide screens it sits centred. */
 #app {
   position: fixed;
   inset: 0;
+  margin: 0 auto;
+  width: min(100vw, calc(100dvh * 9 / 16));
+  overflow: hidden;
+  background: #f7c66b;
+}
+
+@media (min-aspect-ratio: 10/16) {
+  #app {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15), 0 20px 60px rgba(0, 0, 0, 0.45);
+  }
 }
 
 #scene {
@@ -417,7 +428,7 @@ button {
 /* ---------- Effects ---------- */
 
 .flyer {
-  position: absolute;
+  position: fixed;
   left: 0;
   top: 0;
   pointer-events: none;
@@ -426,7 +437,7 @@ button {
 }
 
 .nice {
-  position: absolute;
+  position: fixed;
   transform: translate(-50%, -50%);
   font-size: 30px;
   font-weight: 700;
@@ -440,7 +451,7 @@ button {
 }
 
 .spark {
-  position: absolute;
+  position: fixed;
   color: #ffd54a;
   font-size: 18px;
   pointer-events: none;
@@ -793,29 +804,5 @@ button {
   }
   .level-pill {
     font-size: 13px;
-  }
-}
-
-/* Wide screens: HUD becomes a side column so the room gets the full height. */
-@media (min-width: 900px) and (min-aspect-ratio: 5/4) {
-  .hud-top {
-    left: max(24px, 4vw);
-    top: 50%;
-    transform: translateY(calc(-50% - 50px));
-    width: 420px;
-    padding: 0;
-    gap: 12px;
-  }
-  .boxes {
-    height: 96px;
-  }
-  .hud-bottom {
-    left: calc(max(24px, 4vw) + 210px);
-    transform: translateX(-50%);
-    top: calc(50% + 120px);
-    bottom: auto;
-  }
-  .toast {
-    bottom: 40px;
   }
 }

@@ -6,6 +6,8 @@ Tap the clutter in a room to tidy it. Each item flies into the open box for its 
 
 Boosters: **Return** puts the last 3 tray items back in the room (2 per level), the locked **+** tray slots add space, **Extra box** opens a third box early, and **Hint** points at a good move (3 per level, free). Finish without Return/slots/box for 3 stars.
 
+The game always plays in a portrait phone-shaped frame (9:16); on a PC it sits centred in the window.
+
 Levels: **Study Nook** (17 items), **Cozy Kitchen** (22), **Messy Bedroom** (26). All items and rooms are built procedurally from three.js primitives with a cel-shaded, outlined look, so there are no model or texture files.
 
 ## Run it locally
