@@ -50,7 +50,7 @@ To add a level, add a `LevelDef` to `src/game/levels.ts` (each item rests on a r
 
 Live at **https://huynx-tidy.vercel.app** (Vercel project `huy-nx/huynx-tidy`).
 
-Once the GitHub repo is connected to the Vercel project, every push to `main` deploys to production and every other branch gets a preview URL. [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the tests and build on GitHub as a check.
+Source: https://github.com/Xuanhuy39/tidy. The repo is connected to the Vercel project, so every push to `main` deploys to production and every other branch gets a preview URL. [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the tests and build on GitHub as a check.
 
 Manual deploy from this folder: `vercel deploy --prod --scope huy-nx`.
 

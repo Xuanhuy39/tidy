@@ -24,5 +24,6 @@ If port 5173 is busy, Vite picks the next free one (5174, ...). The terminal pri
 | --- | --- |
 | Game | https://huynx-tidy.vercel.app/ |
 | Vercel project | https://vercel.com/huy-nx/huynx-tidy |
+| GitHub repo | https://github.com/Xuanhuy39/tidy |
 
-Redeploy after changes (from this folder): `vercel deploy --prod --scope huy-nx`
+Pushing to `main` deploys automatically. Manual deploy (from this folder): `vercel deploy --prod --scope huy-nx`
