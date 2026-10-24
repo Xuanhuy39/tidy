@@ -2,8 +2,6 @@ import * as THREE from 'three';
 import { OutlineEffect } from 'three/examples/jsm/effects/OutlineEffect.js';
 import { buildItemModel } from './stage';
 
-const SIZE = 160;
-
 /** Renders each item model once into a small transparent PNG for the 2D UI. */
 export class Thumbs {
   private readonly renderer: THREE.WebGLRenderer;
@@ -12,11 +10,11 @@ export class Thumbs {
   private readonly camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 50);
   private readonly cache = new Map<string, string>();
 
-  constructor() {
+  constructor(size = 160) {
     const canvas = document.createElement('canvas');
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(1);
-    this.renderer.setSize(SIZE, SIZE, false);
+    this.renderer.setSize(size, size, false);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.setClearColor(0x000000, 0);
     this.effect = new OutlineEffect(this.renderer, { defaultThickness: 0.012, defaultColor: [0.24, 0.16, 0.12] });

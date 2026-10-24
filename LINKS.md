@@ -15,6 +15,7 @@ npm.cmd run dev
 | Level 2 — Cozy Kitchen | http://localhost:5173/?level=2 |
 | Level 3 — Messy Bedroom | http://localhost:5173/?level=3 |
 | Menu with all levels unlocked | http://localhost:5173/?unlock |
+| Model gallery (every item, large and at icon size) | http://localhost:5173/gallery.html |
 
 If port 5173 is busy, Vite picks the next free one (5174, ...). The terminal prints the actual link.
 

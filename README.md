@@ -39,7 +39,7 @@ URL options:
 | ----------------------- | -------------------------------------------------------------------- |
 | `src/game/logic.ts`     | The rules (no rendering), the solver and a casual-player simulation  |
 | `src/game/levels.ts`    | Level data: categories in order, and where each item sits            |
-| `src/scene/models.ts`   | The 58 item models                                                   |
+| `src/scene/models.ts`   | The 58 item models (review them at `/gallery.html` in dev)           |
 | `src/scene/rooms.ts`    | Room furniture and the surfaces items rest on                        |
 | `src/scene/stage.ts`    | Camera framing, picking and 3D animation                             |
 | `src/scene/thumbs.ts`   | Renders each model to a small icon for the boxes and tray            |

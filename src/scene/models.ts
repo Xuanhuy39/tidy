@@ -85,28 +85,61 @@ function eraser() {
 // ---------- Snacks ----------
 
 function chipsBag(v: number) {
-  const color = pick([0xf2b632, 0x8bc34a, 0xe8524a], v);
-  const tex = canvasTex(256, 256, (c) => {
-    c.fillStyle = '#' + new THREE.Color(color).getHexString();
-    c.fillRect(0, 0, 256, 256);
-    c.fillStyle = '#ffffff';
+  const color = pick(['#e8443a', '#3f8fd8', '#2fae6a'], v);
+  const tex = canvasTex(256, 320, (c) => {
+    c.fillStyle = color;
+    c.fillRect(0, 0, 256, 320);
+    // Burst behind the chips.
+    c.fillStyle = '#ffd54a';
     c.beginPath();
-    c.ellipse(128, 128, 90, 55, 0, 0, Math.PI * 2);
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2;
+      const r = i % 2 ? 70 : 100;
+      c.lineTo(128 + Math.cos(a) * r, 180 + Math.sin(a) * r);
+    }
     c.fill();
-    c.fillStyle = '#c0392b';
-    c.font = 'bold 54px sans-serif';
+    // A pile of chips.
+    for (const [x, y, r] of [
+      [100, 190, 34],
+      [150, 175, 36],
+      [128, 215, 32],
+    ]) {
+      c.fillStyle = '#f3b33c';
+      c.beginPath();
+      c.ellipse(x, y, r, r * 0.7, 0.3, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = '#c9822a';
+      c.lineWidth = 4;
+      c.stroke();
+    }
+    c.fillStyle = '#ffffff';
+    c.strokeStyle = '#5a1f14';
+    c.lineWidth = 10;
+    c.font = 'bold 66px sans-serif';
     c.textAlign = 'center';
     c.textBaseline = 'middle';
-    c.fillText('CHIPS', 128, 132);
+    c.strokeText('CHIPS', 128, 70);
+    c.fillText('CHIPS', 128, 70);
   });
-  const geo = new THREE.SphereGeometry(0.5, 32, 20);
-  geo.scale(1.45, 0.45, 1.9);
-  const bag = mesh(geo, texMat(tex));
-  bag.rotation.y = Math.PI / 2;
-  bag.position.y = 0.23;
-  const crimpA = at(box(1.3, 0.08, 0.16, color, 0.03), 0, 0.22, -0.92);
-  const crimpB = at(box(1.3, 0.08, 0.16, color, 0.03), 0, 0.22, 0.92);
-  return group(bag, crimpA, crimpB);
+  // A box puffed up in the middle and pinched flat at both sealed ends.
+  const geo = new THREE.BoxGeometry(1.4, 0.6, 1.9, 14, 4, 18);
+  const p = geo.getAttribute('position');
+  for (let i = 0; i < p.count; i++) {
+    const nx = p.getX(i) / 0.7;
+    const nz = p.getZ(i) / 0.95;
+    const puff = Math.sqrt(Math.max(0, 1 - nz ** 6)) * (1 - 0.35 * nx ** 4);
+    p.setY(i, p.getY(i) * Math.max(puff, 0.08));
+    p.setX(i, p.getX(i) * (1 - 0.08 * nz ** 2));
+  }
+  geo.computeVertexNormals();
+  geo.translate(0, 0.3, 0);
+  const side = mat(color);
+  const bag = mesh(geo, [side, side, texMat(tex), side, side, side]);
+  const g = group(bag);
+  for (const z of [-0.98, 0.98]) {
+    for (let i = 0; i < 7; i++) g.add(at(box(0.2, 0.06, 0.14, color), -0.6 + i * 0.2, 0.3, z, 0, 45, 0));
+  }
+  return g;
 }
 
 function popcorn() {
@@ -195,23 +228,31 @@ function phone(v: number) {
 }
 
 function gamepad(v: number) {
-  const body = pick([0xf1f1f4, 0x3a3f4a], v);
+  const body = pick([0x3a3f4a, 0xe74c3c], v);
+  const grip = pick([0x2c3038, 0xc23b2e], v);
   const g = group(
-    at(box(1.4, 0.32, 0.72, body, 0.15), 0, 0.2, -0.08),
-    at(scaled(sph(0.38, body, 18), 1, 0.45, 1.1), -0.56, 0.18, 0.2),
-    at(scaled(sph(0.38, body, 18), 1, 0.45, 1.1), 0.56, 0.18, 0.2),
-    at(cyl(0.12, 0.13, 0.12, DARK, 16), -0.4, 0.4, -0.08),
-    at(cyl(0.12, 0.13, 0.12, DARK, 16), 0.22, 0.4, 0.15),
-    at(box(0.26, 0.06, 0.08, DARK), -0.12, 0.38, 0.16),
-    at(box(0.08, 0.06, 0.26, DARK), -0.12, 0.38, 0.16),
+    at(box(1.5, 0.34, 0.8, body, 0.16), 0, 0.2, -0.1),
+    at(scaled(sph(0.36, grip, 20), 1, 0.55, 1.35), -0.58, 0.2, 0.28, 0, -20, 0),
+    at(scaled(sph(0.36, grip, 20), 1, 0.55, 1.35), 0.58, 0.2, 0.28, 0, 20, 0),
+    // D-pad
+    at(box(0.36, 0.08, 0.12, 0xe9e9ee, 0.03), -0.45, 0.4, -0.12),
+    at(box(0.12, 0.08, 0.36, 0xe9e9ee, 0.03), -0.45, 0.4, -0.12),
+    // Thumbsticks
+    at(cyl(0.11, 0.13, 0.12, 0x9aa0aa, 16), -0.2, 0.43, 0.2),
+    at(cyl(0.13, 0.13, 0.04, 0x5b6170, 16), -0.2, 0.5, 0.2),
+    at(cyl(0.11, 0.13, 0.12, 0x9aa0aa, 16), 0.2, 0.43, 0.2),
+    at(cyl(0.13, 0.13, 0.04, 0x5b6170, 16), 0.2, 0.5, 0.2),
+    // Start / select
+    at(box(0.12, 0.04, 0.06, 0xe9e9ee, 0.02), -0.1, 0.38, -0.22),
+    at(box(0.12, 0.04, 0.06, 0xe9e9ee, 0.02), 0.1, 0.38, -0.22),
   );
   const btn = [
-    [0xe74c3c, 0.48, -0.08],
-    [0x2ecc71, 0.6, -0.2],
-    [0x3498db, 0.36, -0.2],
-    [0xf1c40f, 0.48, -0.32],
+    [0x2ecc71, 0.45, 0.02],
+    [0xe74c3c, 0.6, -0.12],
+    [0x3498db, 0.3, -0.12],
+    [0xf1c40f, 0.45, -0.26],
   ];
-  for (const [c, x, z] of btn) g.add(at(cyl(0.06, 0.06, 0.06, c, 12), x, 0.38, z));
+  for (const [c, x, z] of btn) g.add(at(cyl(0.075, 0.075, 0.08, c, 14), x, 0.4, z));
   return g;
 }
 
@@ -225,14 +266,26 @@ function headphones(v: number) {
 }
 
 function mouse() {
-  const geo = new THREE.SphereGeometry(0.5, 28, 18, 0, Math.PI * 2, 0, Math.PI / 2);
-  geo.scale(0.7, 0.55, 1.0);
-  const shell = mesh(geo, 0xf3f3f6);
-  const base = at(cyl(0.35, 0.35, 0.04, 0xc4c4cc, 24), 0, 0.02, 0);
-  base.scale.z = 1.42;
-  const wheel = at(cyl(0.06, 0.06, 0.06, DARK, 12), 0, 0.27, -0.2, 0, 0, 90);
-  const split = at(box(0.015, 0.02, 0.4, 0xb0b0b8), 0, 0.27, -0.26);
-  return group(shell, base, wheel, split);
+  const shellGeo = new THREE.SphereGeometry(0.5, 32, 20, 0, Math.PI * 2, 0, Math.PI / 2);
+  shellGeo.scale(0.64, 0.5, 1.0);
+  return group(
+    mesh(shellGeo, 0x8e96a6),
+    at(scaled(cyl(0.32, 0.32, 0.05, 0x3a3f4a, 28), 1, 1, 1.56), 0, 0.02, 0),
+    // Button split and scroll wheel.
+    at(box(0.025, 0.05, 0.42, 0x3a3f4a), 0, 0.2, -0.27, -22),
+    at(cyl(0.07, 0.07, 0.09, 0x5b8def, 14), 0, 0.235, -0.22, 0, 0, 90),
+    // Cable out of the front.
+    tube(
+      [
+        [0, 0.08, -0.48],
+        [0.03, 0.05, -0.75],
+        [0.3, 0.04, -0.95],
+        [0.65, 0.04, -1.02],
+      ],
+      0.04,
+      0x3a3f4a,
+    ),
+  );
 }
 
 function handheld() {
@@ -260,29 +313,63 @@ function handheld() {
 }
 
 function speaker() {
+  // A boombox: easier to read as "electronics" than a cylinder.
+  const cone = (x: number) =>
+    group(
+      at(cyl(0.36, 0.36, 0.06, 0x2c3038, 28), 0, 0, 0, 90),
+      at(cyl(0.3, 0.3, 0.07, 0x5a6070, 28), 0, 0, 0.01, 90),
+      at(cyl(0.12, 0.12, 0.09, 0x9aa0aa, 20), 0, 0, 0.02, 90),
+      at(torus(0.33, 0.03, 0xc9ced6, Math.PI * 2, 32), 0, 0, 0.04),
+    ).translateX(x);
   return group(
-    at(cyl(0.45, 0.45, 0.9, 0x4b6b8a, 32), 0, 0.45, 0),
-    at(cyl(0.38, 0.38, 0.04, 0x2e3e52, 32), 0, 0.91, 0),
-    at(torus(0.45, 0.04, 0x9db4cc), 0, 0.9, 0, 90),
-    at(cyl(0.08, 0.08, 0.03, 0x9db4cc, 16), 0, 0.93, 0),
-    at(box(0.3, 0.1, 0.05, 0x9db4cc, 0.02), 0, 0.5, 0.45),
+    at(box(2.0, 1.0, 0.62, 0xe9523f, 0.12), 0, 0.5, 0),
+    at(box(1.86, 0.18, 0.64, 0x2c3038, 0.05), 0, 0.12, 0),
+    at(cone(-0.58), 0, 0.55, 0.32),
+    at(cone(0.58), 0, 0.55, 0.32),
+    at(box(0.5, 0.32, 0.04, 0x9fd8f2, 0.04), 0, 0.62, 0.32),
+    at(box(0.3, 0.08, 0.05, 0x2c3038, 0.02), 0, 0.62, 0.33),
+    // Handle
+    at(box(0.1, 0.35, 0.12, 0x2c3038, 0.04), -0.75, 1.1, 0),
+    at(box(0.1, 0.35, 0.12, 0x2c3038, 0.04), 0.75, 1.1, 0),
+    at(box(1.6, 0.1, 0.14, 0x2c3038, 0.05), 0, 1.28, 0),
+    // Buttons on top
+    at(box(0.14, 0.08, 0.12, 0xf2b632, 0.03), -0.2, 1.03, -0.1),
+    at(box(0.14, 0.08, 0.12, 0x3fb5a5, 0.03), 0, 1.03, -0.1),
+    at(box(0.14, 0.08, 0.12, 0xf5f5f5, 0.03), 0.2, 1.03, -0.1),
   );
 }
 
 function tablet() {
-  const tex = canvasTex(192, 256, (c) => {
-    const grd = c.createLinearGradient(0, 0, 0, 256);
-    grd.addColorStop(0, '#8fe0c6');
-    grd.addColorStop(1, '#5aa6e8');
+  const tex = canvasTex(256, 192, (c) => {
+    const grd = c.createLinearGradient(0, 0, 0, 192);
+    grd.addColorStop(0, '#7fd0f5');
+    grd.addColorStop(1, '#d9f3ff');
     c.fillStyle = grd;
-    c.fillRect(0, 0, 192, 256);
-    c.fillStyle = 'rgba(255,255,255,0.85)';
-    for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) c.fillRect(18 + k * 42, 30 + r * 50, 26, 26);
+    c.fillRect(0, 0, 256, 192);
+    c.fillStyle = '#ffd54a';
+    c.beginPath();
+    c.arc(190, 50, 26, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#6cc070';
+    c.beginPath();
+    c.moveTo(0, 192);
+    c.quadraticCurveTo(70, 90, 140, 150);
+    c.quadraticCurveTo(200, 110, 256, 140);
+    c.lineTo(256, 192);
+    c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.9)';
+    c.fillRect(0, 0, 256, 16);
   });
-  const screen = mesh(new THREE.PlaneGeometry(1.36, 1.86), texMat(tex));
+  const screen = mesh(new THREE.PlaneGeometry(1.9, 1.38), texMat(tex));
   screen.rotation.x = -Math.PI / 2;
-  screen.position.y = 0.111;
-  return group(at(box(1.55, 0.11, 2.05, 0xb9bcc6, 0.06), 0, 0.055, 0), screen);
+  screen.position.y = 0.135;
+  // Landscape, dark bezel and a coloured case so it never reads as a big phone.
+  return group(
+    at(box(2.3, 0.1, 1.72, 0x6c4ac2, 0.08), 0, 0.05, 0),
+    at(box(2.12, 0.04, 1.58, 0x22252c, 0.04), 0, 0.11, 0),
+    screen,
+    at(cyl(0.03, 0.03, 0.02, 0x555a66, 10), -1.0, 0.13, 0),
+  );
 }
 
 function camera() {
@@ -358,47 +445,46 @@ function pear() {
 }
 
 function strawberry() {
-  const body = lathe(
-    [
-      [0, 0],
-      [0.15, 0.06],
-      [0.38, 0.4],
-      [0.46, 0.7],
-      [0.36, 0.86],
-      [0, 0.9],
-    ],
-    0xe8344a,
-  );
-  const g = group(body);
-  for (let i = 0; i < 18; i++) {
-    const a = i * 2.4;
-    const y = 0.2 + (i % 6) * 0.1;
-    const r = 0.22 + (y > 0.6 ? 0.17 : y * 0.3);
-    g.add(at(sph(0.025, 0xffe28a, 6), Math.cos(a) * r, y, Math.sin(a) * r));
+  const pts: [number, number][] = [];
+  for (let i = 0; i <= 16; i++) {
+    const t = i / 16;
+    const r = 0.5 * Math.sin(Math.PI * Math.min(1, t * 1.15)) ** 0.75 * (0.35 + 0.65 * t);
+    pts.push([Math.max(r, 0.001), t * 1.0]);
   }
-  for (let i = 0; i < 5; i++) {
-    const a = (i / 5) * Math.PI * 2;
-    const l = new THREE.SphereGeometry(0.16, 10, 6);
-    l.scale(1, 0.2, 0.45);
-    g.add(at(mesh(l, 0x3f9c40), Math.cos(a) * 0.17, 0.9, Math.sin(a) * 0.17, 0, (-a * 180) / Math.PI, 0));
+  pts.push([0, 1.0]);
+  const g = group(lathe(pts, 0xe8344a, 32));
+  for (let row = 0; row < 5; row++) {
+    const y = 0.18 + row * 0.16;
+    const t = y;
+    const r = 0.5 * Math.sin(Math.PI * Math.min(1, t * 1.15)) ** 0.75 * (0.35 + 0.65 * t);
+    for (let k = 0; k < 9; k++) {
+      const a = (k / 9) * Math.PI * 2 + row * 0.35;
+      const seed = scaled(sph(0.035, 0xfff1a0, 6), 1, 1.6, 1);
+      g.add(at(seed, Math.cos(a) * r, y, Math.sin(a) * r));
+    }
   }
-  return group(at(g, 0, 0.45, 0, 0, 0, 90));
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const l = new THREE.SphereGeometry(0.2, 10, 6);
+    l.scale(1, 0.18, 0.42);
+    g.add(at(mesh(l, 0x3f9c40), Math.cos(a) * 0.17, 1.0, Math.sin(a) * 0.17, 0, (-a * 180) / Math.PI, -15));
+  }
+  g.add(at(cyl(0.035, 0.05, 0.2, 0x4f8a2f, 8), 0, 1.1, 0));
+  return g;
 }
 
 function lemon() {
-  const body = lathe(
-    [
-      [0, -0.62],
-      [0.08, -0.56],
-      [0.34, -0.36],
-      [0.42, 0],
-      [0.34, 0.36],
-      [0.08, 0.56],
-      [0, 0.62],
-    ],
-    0xf5dc3c,
-  );
-  return group(at(body, 0, 0.42, 0, 0, 0, 90));
+  const pts: [number, number][] = [];
+  for (let i = 0; i <= 24; i++) {
+    const t = i / 24;
+    const y = -0.65 + t * 1.3;
+    const r = 0.42 * Math.sin(Math.PI * t) ** 0.85;
+    pts.push([Math.max(r, 0.001), y]);
+  }
+  const body = lathe(pts, 0xf7d93c, 40);
+  const g = group(body, at(sph(0.06, 0xe9c22a, 10), 0, 0.66, 0), at(sph(0.05, 0xe9c22a, 10), 0, -0.66, 0));
+  g.add(at(leaf(0.12, 0.7, 0, 60), 0, 0, 0));
+  return group(at(g, 0, 0.42, 0, 0, 0, 90));
 }
 
 // ---------- Drinks ----------
@@ -502,21 +588,26 @@ function coffeeCup() {
 
 function plate(v: number) {
   const rim = pick([0x5b8def, 0xe8524a, 0x3fa36b], v);
+  const glaze = pick([0xd9e8fa, 0xfadfd9, 0xdcf2df], v);
+  const dish = lathe(
+    [
+      [0, 0.04],
+      [0.5, 0.04],
+      [0.62, 0.08],
+      [0.9, 0.18],
+      [0.92, 0.2],
+      [0.9, 0.12],
+      [0.6, 0.02],
+      [0.4, 0],
+      [0, 0],
+    ],
+    mat(glaze, { side: THREE.DoubleSide }),
+    48,
+  );
   return group(
-    lathe(
-      [
-        [0, 0],
-        [0.5, 0],
-        [0.6, 0.06],
-        [0.88, 0.14],
-        [0.9, 0.16],
-        [0.6, 0.1],
-        [0, 0.08],
-      ],
-      WHITE,
-      40,
-    ),
-    at(torus(0.78, 0.025, rim, Math.PI * 2, 48), 0, 0.14, 0, 90),
+    dish,
+    at(torus(0.84, 0.035, rim, Math.PI * 2, 48), 0, 0.18, 0, 90),
+    at(torus(0.56, 0.02, rim, Math.PI * 2, 40), 0, 0.075, 0, 90),
   );
 }
 
@@ -530,14 +621,23 @@ function mug(v: number) {
 }
 
 function spoon() {
-  const bowl = new THREE.SphereGeometry(0.24, 20, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
-  bowl.scale(1.35, 0.5, 1);
-  return group(at(mesh(bowl, METAL), -0.75, 0.13, 0, 180), at(box(1.2, 0.06, 0.13, METAL, 0.03), 0.2, 0.1, 0, 0, 0, 4));
+  // Chunky "kids' cutlery": metal head, coloured handle, so it reads at icon size.
+  const bowl = new THREE.SphereGeometry(0.3, 24, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+  bowl.scale(1.35, 0.45, 1);
+  return group(
+    at(mesh(bowl, METAL), -0.85, 0.14, 0, 180),
+    at(box(0.5, 0.08, 0.12, METAL, 0.03), -0.35, 0.08, 0),
+    at(box(1.0, 0.14, 0.22, 0x3fb5a5, 0.07), 0.4, 0.08, 0),
+  );
 }
 
 function fork() {
-  const g = group(at(box(1.1, 0.06, 0.14, METAL, 0.03), 0.3, 0.05, 0), at(box(0.28, 0.06, 0.34, METAL, 0.03), -0.35, 0.05, 0));
-  for (let i = 0; i < 4; i++) g.add(at(box(0.42, 0.05, 0.05, METAL, 0.02), -0.68, 0.05, -0.13 + i * 0.087));
+  const g = group(
+    at(box(1.0, 0.14, 0.22, 0xf08a3c, 0.07), 0.45, 0.08, 0),
+    at(box(0.5, 0.08, 0.12, METAL, 0.03), -0.25, 0.06, 0),
+    at(box(0.3, 0.08, 0.44, METAL, 0.04), -0.55, 0.06, 0),
+  );
+  for (let i = 0; i < 4; i++) g.add(at(box(0.46, 0.07, 0.07, METAL, 0.03), -0.9, 0.06, -0.165 + i * 0.11));
   return g;
 }
 
@@ -673,8 +773,30 @@ function tshirt(v: number) {
 
 function sweater(v: number) {
   const c = pick([0xe9a23b, 0x9b6fd0, 0xd65a4a], v);
-  const g = group(at(box(1.5, 0.5, 1.15, c, 0.16), 0, 0.25, 0));
-  for (let i = 0; i < 3; i++) g.add(at(box(1.52, 0.05, 1.17, 0xffffff, 0.02), 0, 0.12 + i * 0.13, 0));
+  const rib = new THREE.Color(c).multiplyScalar(0.78).getHex();
+  // Laid flat with long sleeves, ribbed cuffs and a knitted stripe.
+  const s = poly([
+    [-0.48, -0.78],
+    [0.48, -0.78],
+    [0.48, 0.18],
+    [1.05, -0.62],
+    [1.3, -0.46],
+    [0.62, 0.72],
+    [0.22, 0.78],
+    [0, 0.64],
+    [-0.22, 0.78],
+    [-0.62, 0.72],
+    [-1.3, -0.46],
+    [-1.05, -0.62],
+    [-0.48, 0.18],
+  ]);
+  const g = group(slab(s, 0.14, c, 0.06));
+  g.add(at(box(1.0, 0.04, 0.16, rib, 0.02), 0, 0.22, 0.7));
+  g.add(at(box(0.34, 0.04, 0.16, rib, 0.02), 1.18, 0.22, 0.54, 0, -52, 0));
+  g.add(at(box(0.34, 0.04, 0.16, rib, 0.02), -1.18, 0.22, 0.54, 0, 52, 0));
+  for (const z of [-0.05, 0.12]) g.add(at(box(0.94, 0.03, 0.07, 0xffffff), 0, 0.22, z));
+  for (let i = 0; i < 5; i++) g.add(at(box(0.07, 0.035, 0.07, 0xffffff), -0.36 + i * 0.18, 0.225, 0.035, 0, 45, 0));
+  g.add(at(torus(0.2, 0.05, rib, Math.PI, 20), 0, 0.22, -0.66, 90, 0, 180));
   return g;
 }
 
@@ -705,13 +827,42 @@ function cap(v: number) {
 
 function sneaker(v: number) {
   const c = pick([0xe74c3c, 0x4f9be8, 0x2fb37a], v);
-  const g = group(
-    at(box(1.55, 0.18, 0.62, 0xffffff, 0.08), 0, 0.09, 0),
-    at(box(1.0, 0.42, 0.58, c, 0.2), -0.2, 0.38, 0),
-    at(box(0.75, 0.24, 0.56, c, 0.12), 0.4, 0.27, 0),
-    at(box(0.25, 0.5, 0.5, c, 0.1), -0.62, 0.43, 0),
-  );
-  for (let i = 0; i < 3; i++) g.add(at(box(0.05, 0.02, 0.4, 0xffffff), 0.05 + i * 0.16, 0.42 - i * 0.04, 0, 0, 0, -18));
+  const extrudeSide = (shape: THREE.Shape, depth: number, color: number) => {
+    const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 3, curveSegments: 18 });
+    geo.translate(0, 0, -depth / 2);
+    return mesh(geo, color);
+  };
+  // Side profile (x along the shoe, y up), extruded across its width.
+  const upper = new THREE.Shape();
+  upper.moveTo(-0.82, 0.12);
+  upper.lineTo(0.7, 0.12);
+  upper.quadraticCurveTo(0.95, 0.14, 0.86, 0.32);
+  upper.quadraticCurveTo(0.6, 0.48, 0.22, 0.52);
+  upper.lineTo(-0.12, 0.78);
+  upper.lineTo(-0.62, 0.82);
+  upper.quadraticCurveTo(-0.86, 0.78, -0.84, 0.5);
+  upper.closePath();
+  const sole = new THREE.Shape();
+  sole.moveTo(-0.86, 0);
+  sole.lineTo(0.8, 0);
+  sole.quadraticCurveTo(0.98, 0.04, 0.94, 0.18);
+  sole.lineTo(-0.88, 0.18);
+  sole.closePath();
+  const g = group(extrudeSide(upper, 0.5, c), extrudeSide(sole, 0.58, 0xffffff));
+  // Collar opening, laces, side stripe, toe cap.
+  g.add(at(scaled(cyl(0.2, 0.2, 0.05, 0x2c3038, 20), 1.15, 1, 0.75), -0.42, 0.85, 0, 0, 0, 5));
+  for (let i = 0; i < 4; i++) g.add(at(box(0.06, 0.04, 0.46, 0xffffff, 0.02), 0.28 - i * 0.12, 0.56 + i * 0.065, 0, 0, 0, 28));
+  const stripe = new THREE.Shape();
+  stripe.moveTo(-0.55, 0.3);
+  stripe.quadraticCurveTo(0.0, 0.18, 0.45, 0.4);
+  stripe.quadraticCurveTo(0.0, 0.3, -0.5, 0.42);
+  stripe.closePath();
+  for (const z of [0.3, -0.36]) {
+    const st = mesh(new THREE.ExtrudeGeometry(stripe, { depth: 0.06, bevelEnabled: false }), 0xffffff);
+    st.position.z = z;
+    g.add(st);
+  }
+  g.add(at(scaled(sph(0.26, 0xf3f3f3, 16), 1.1, 0.55, 1.05), 0.68, 0.2, 0));
   return g;
 }
 
@@ -936,6 +1087,7 @@ export const MODELS: Record<string, Builder> = {
 };
 
 export const MODEL_NAMES: Record<string, string> = {
+  speaker: 'Boombox',
   setSquare: 'Set square',
   penCup: 'Pen cup',
   chipsBag: 'Chips',
