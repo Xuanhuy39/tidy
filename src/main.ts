@@ -4,7 +4,6 @@ import '@fontsource/fredoka/600.css';
 import '@fontsource/fredoka/700.css';
 import './style.css';
 import { sfx } from './audio';
-import { CATEGORIES } from './game/categories';
 import { BOX_COST, REVIVE_COST, SLOT_COST, WIN_REWARD } from './game/economy';
 import { LEVELS } from './game/levels';
 import { Game, MAX_BOXES, MAX_TRAY, type GameEvent } from './game/logic';
@@ -336,29 +335,24 @@ function showMenu(): void {
   hud.setVisible(false);
   stage.load(LEVELS[Math.min(levelIndex, LEVELS.length - 1)]);
   layout();
-  const cards = LEVELS.map((l, i) => {
+  const tiles = LEVELS.map((l, i) => {
     const unlocked = i === 0 || (progress.stars[LEVELS[i - 1].id] ?? 0) > 0 || params.has('unlock');
     const cleared = (progress.stars[l.id] ?? 0) > 0;
-    const cats = l.queue.map((c) => CATEGORIES[c].icon).join(' ');
-    return `<button class="level-card" data-i="${i}" ${unlocked ? '' : 'disabled'}>
-      <span class="num">${unlocked ? i + 1 : '🔒'}</span>
-      <span class="info"><div class="lname">${l.name}</div><div class="lsub">${l.items.length} items · ${cats}</div></span>
-      ${cleared ? '<span class="done">✓ Cleared</span>' : ''}
+    return `<button class="level-tile${cleared ? ' cleared' : ''}" data-i="${i}" ${unlocked ? '' : 'disabled'} aria-label="Level ${i + 1}">
+      ${unlocked ? i + 1 : '🔒'}${cleared ? '<i class="tick">✓</i>' : ''}
     </button>`;
   }).join('');
   closeOverlay = overlay(
     hudRoot,
     `<div class="logo">Tidy Up!</div>
-     <p class="tagline">A cozy sorting puzzle</p>
      <div class="menu-coins"><i class="coin"></i>${progress.coins.toLocaleString('en-US')}</div>
-     <div class="level-list">${cards}</div>
-     <div class="how">Tap items to drop them into matching boxes. Items with nothing to go in wait in the tray — if the tray fills up, you lose! Things underneath can't be picked until what's on top is cleared.</div>
+     <div class="level-grid">${tiles}</div>
      <button class="sound-toggle">${sfx.muted ? '🔇 Sound off' : '🔊 Sound on'}</button>`,
     [],
     'menu',
   );
   const card = hudRoot.querySelector('.overlay.menu')!;
-  card.querySelectorAll<HTMLButtonElement>('.level-card').forEach((b) => {
+  card.querySelectorAll<HTMLButtonElement>('.level-tile').forEach((b) => {
     b.onclick = () => {
       sfx.unlock();
       sfx.click();

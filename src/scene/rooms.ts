@@ -426,6 +426,256 @@ function bedroom(): Room {
   };
 }
 
+// ---------- Bathroom ----------
+
+function tileTex(a: string, grout: string, n = 4) {
+  return canvasTex(128, 128, (c) => {
+    c.fillStyle = a;
+    c.fillRect(0, 0, 128, 128);
+    c.strokeStyle = grout;
+    c.lineWidth = 4;
+    for (let i = 0; i <= n; i++) {
+      const p = (i * 128) / n;
+      c.beginPath();
+      c.moveTo(p, 0);
+      c.lineTo(p, 128);
+      c.moveTo(0, p);
+      c.lineTo(128, p);
+      c.stroke();
+    }
+  });
+}
+
+/** Tiled lower half on both walls. */
+function wainscot(w: number, d: number, h: number) {
+  const make = (len: number) => {
+    const t = tileTex('#dff1f7', '#b9dbe6');
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(len / 2, h / 2);
+    const m = texMat(t);
+    m.userData = noOutline;
+    return m;
+  };
+  const back = mesh(new THREE.PlaneGeometry(w, h), make(w));
+  back.position.set(w / 2, h / 2, 0.02);
+  const left = mesh(new THREE.PlaneGeometry(d, h), make(d));
+  left.rotation.y = Math.PI / 2;
+  left.position.set(0.02, h / 2, d / 2);
+  const trim = 0x8fc6d8;
+  return group(back, left, at(box(w, 0.15, 0.12, plain(trim)), w / 2, h, 0.06), at(box(0.12, 0.15, d, plain(trim)), 0.06, h, d / 2));
+}
+
+function bathroom(): Room {
+  const W = 12;
+  const D = 10;
+  const floorTex = tileTex('#f4f7f8', '#c9d8de', 2);
+  floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
+  floorTex.repeat.set(W / 1.5, D / 1.5);
+  const floorMat = texMat(floorTex);
+  floorMat.userData = noOutline;
+  const floor = mesh(new THREE.BoxGeometry(W, 0.3, D), floorMat);
+  floor.position.set(W / 2, -0.15, D / 2);
+  const g = group(floor, walls(W, D, 9, '#eaf6f9', '#dceff4', 0x8fc6d8), wainscot(W, D, 4), windowLeft(7.8, 5.0, 2.4, 2.4));
+
+  // Bathtub along the left wall, with water you can float toys in.
+  const tubC = 0xfdfdfd;
+  const waterY = 1.5;
+  const tub = group(
+    at(box(3.4, 0.35, 6.3, tubC, 0.1), 0, 0.35, 0),
+    at(box(0.35, 1.9, 6.3, tubC, 0.12), -1.52, 1.0, 0),
+    at(box(0.35, 1.9, 6.3, tubC, 0.12), 1.52, 1.0, 0),
+    at(box(3.4, 1.9, 0.35, tubC, 0.12), 0, 1.0, -2.98),
+    at(box(3.4, 1.9, 0.35, tubC, 0.12), 0, 1.0, 2.98),
+    at(box(2.7, waterY - 0.5, 5.6, mat(0x8fd8f0, { transparent: true, opacity: 0.9 })), 0, (waterY + 0.5) / 2, 0),
+  );
+  for (const [x, z] of [
+    [-1.4, -2.8],
+    [1.4, -2.8],
+    [-1.4, 2.8],
+    [1.4, 2.8],
+  ])
+    tub.add(at(sph(0.22, 0xe9b44a, 12), x, 0.1, z));
+  g.add(at(tub, 1.95, 0, 3.45));
+  // Tap and shower head on the left wall.
+  g.add(at(group(at(cyl(0.08, 0.08, 0.7, METAL_TAP, 10), 0, 0, 0, 0, 0, 90), at(cyl(0.08, 0.1, 0.25, METAL_TAP, 10), 0.35, -0.12, 0)), 0.35, 2.6, 1.2));
+  g.add(at(group(at(cyl(0.05, 0.05, 2.0, METAL_TAP, 8), 0, 0, 0), at(cyl(0.35, 0.2, 0.15, METAL_TAP, 18), 0.25, 1.0, 0, 0, 0, -60)), 0.12, 4.6, 1.2));
+
+  // Toilet against the back wall.
+  const toiletC = 0xffffff;
+  const toilet = group(
+    at(box(1.7, 1.6, 0.75, toiletC, 0.12), 0, 2.15, -0.75),
+    at(box(1.85, 0.12, 0.85, toiletC, 0.05), 0, 3.0, -0.75),
+    at(box(0.3, 0.08, 0.12, METAL_TAP, 0.03), 0.5, 2.7, -0.36),
+    at(cyl(0.5, 0.35, 1.25, toiletC, 24), 0, 0.62, 0.35),
+    at(scaled(cyl(0.82, 0.78, 0.25, toiletC, 28), 1, 1, 1.15), 0, 1.38, 0.35),
+    at(scaled(cyl(0.84, 0.84, 0.1, 0xe9f4fb, 28), 1, 1, 1.15), 0, 1.56, 0.35),
+  );
+  g.add(at(toilet, 5.2, 0, 1.3));
+
+  // Vanity with basin and mirror.
+  const top = 3.0;
+  g.add(at(box(3.9, top - 0.2, 2.3, 0x7fb6a4, 0.05), 9.55, (top - 0.2) / 2, 1.2));
+  g.add(at(box(4.0, 0.2, 2.4, 0xf5efe4, 0.04), 9.55, top - 0.1, 1.2));
+  for (const x of [8.6, 10.5]) {
+    g.add(at(box(1.75, 2.2, 0.06, 0x8fc4b2, 0.05), x, 1.35, 2.36));
+    g.add(at(box(0.08, 0.5, 0.1, 0xf5efe4, 0.03), x + (x < 9.5 ? 0.6 : -0.6), 1.6, 2.42));
+  }
+  g.add(at(scaled(cyl(0.72, 0.72, 0.04, 0xbfd5dc, 28), 1, 1, 0.75), 9.55, top + 0.01, 1.35));
+  g.add(at(group(at(cyl(0.08, 0.08, 0.6, METAL_TAP, 10), 0, 0.3, 0), at(cyl(0.07, 0.07, 0.45, METAL_TAP, 10), 0, 0.6, 0.2, 90)), 9.55, top, 0.4));
+  g.add(at(box(2.6, 2.2, 0.12, 0xe9b44a, 0.08), 9.55, 5.2, 0.08));
+  g.add(at(box(2.3, 1.9, 0.04, plain(0xcfeaf3)), 9.55, 5.2, 0.16));
+  g.add(at(box(0.1, 1.4, 0.02, plain(0xffffff)), 9.0, 5.3, 0.19, 0, 0, -30));
+
+  // Wall shelf above the toilet.
+  g.add(at(box(2.8, 0.18, 1.1, 0xf5efe4, 0.04), 5.2, 5.3, 0.55));
+  g.add(at(box(0.12, 0.5, 0.9, 0xd9cfbf), 4.0, 5.0, 0.45), at(box(0.12, 0.5, 0.9, 0xd9cfbf), 6.4, 5.0, 0.45));
+
+  // Towel rail on the back wall right of the mirror.
+  g.add(at(cyl(0.05, 0.05, 1.4, METAL_TAP, 8), 11.4, 4.0, 0.25, 0, 90, 90));
+
+  g.add(at(rug(4.4, 3.2, '#9fd3e6', '#ffffff'), 6.6, 0.03, 6.6));
+
+  g.traverse((o) => {
+    if ((o as THREE.Mesh).isMesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+    }
+  });
+  return {
+    group: g,
+    surfaces: { tub: waterY, tank: 3.06, lid: 1.61, vanity: top, shelf: 5.39, mat: 0.06, floor: 0 },
+    focus: new THREE.Box3(new THREE.Vector3(0.6, 0, 0.3), new THREE.Vector3(11.8, 6.4, 9.2)),
+    background: 0x9fd8e8,
+  };
+}
+
+// ---------- Living room ----------
+
+function living(): Room {
+  const W = 12;
+  const D = 10;
+  const g = group(woodFloor(W, D, '#c99566', '#bd8a5c'), walls(W, D, 9, '#f6efd9', '#ecdfbf', 0xd8c49a));
+
+  // Window on the back wall above the sofa.
+  const sky = canvasTex(128, 96, (c) => {
+    const grd = c.createLinearGradient(0, 0, 0, 96);
+    grd.addColorStop(0, '#8fd0f5');
+    grd.addColorStop(1, '#d9f1fb');
+    c.fillStyle = grd;
+    c.fillRect(0, 0, 128, 96);
+    c.fillStyle = '#7cc46a';
+    c.fillRect(0, 74, 128, 22);
+    c.fillStyle = 'rgba(255,255,255,0.9)';
+    c.beginPath();
+    c.ellipse(40, 30, 18, 8, 0, 0, Math.PI * 2);
+    c.fill();
+  });
+  const skyMat = texMat(sky);
+  skyMat.userData = noOutline;
+  g.add(at(mesh(new THREE.PlaneGeometry(3.6, 2.4), skyMat), 5.2, 5.6, 0.02));
+  for (const [w, h, x, y] of [
+    [3.9, 0.2, 5.2, 4.4],
+    [3.9, 0.2, 5.2, 6.8],
+    [0.2, 2.6, 3.3, 5.6],
+    [0.2, 2.6, 7.1, 5.6],
+    [0.12, 2.4, 5.2, 5.6],
+  ])
+    g.add(at(box(w, h, 0.18, 0xfaf3e6), x, y, 0.08));
+
+  // Sofa along the back wall.
+  const sofaC = 0x3fa39a;
+  const seat = 1.75;
+  const sofa = group(
+    at(box(6.5, 1.1, 2.9, darker(sofaC), 0.15), 0, 0.75, 0),
+    at(box(2.6, 0.45, 2.1, sofaC, 0.2), -1.35, seat - 0.22, 0.3),
+    at(box(2.6, 0.45, 2.1, sofaC, 0.2), 1.35, seat - 0.22, 0.3),
+    at(box(6.5, 1.8, 0.7, sofaC, 0.25), 0, 2.0, -1.1),
+    at(box(0.6, 1.2, 2.9, sofaC, 0.22), -3.0, 1.55, 0),
+    at(box(0.6, 1.2, 2.9, sofaC, 0.22), 3.0, 1.55, 0),
+    at(box(1.1, 0.9, 0.35, 0xf2b632, 0.25), -2.1, 2.2, -0.6, -15, 0, 8),
+  );
+  for (const x of [-2.9, 2.9]) for (const z of [-1.2, 1.2]) sofa.add(at(cyl(0.12, 0.08, 0.3, 0x5a3e2b, 8), x, 0.15, z));
+  g.add(at(sofa, 5.25, 0, 1.75));
+
+  // Coffee table.
+  const tableTop = 1.6;
+  const table = group(at(box(4.4, 0.22, 2.4, 0xd39a5c, 0.06), 0, tableTop - 0.11, 0), at(box(4.0, 0.08, 2.0, 0xb87843), 0, 0.45, 0));
+  for (const [x, z] of [
+    [-1.95, -0.95],
+    [1.95, -0.95],
+    [-1.95, 0.95],
+    [1.95, 0.95],
+  ])
+    table.add(at(box(0.18, tableTop - 0.2, 0.18, 0xb87843), x, (tableTop - 0.2) / 2, z));
+  g.add(at(table, 5.8, 0, 6.2));
+
+  // TV on a low console against the left wall.
+  const consoleTop = 1.9;
+  g.add(at(box(1.8, consoleTop, 5.6, 0x8a5a3c, 0.06), 1.2, consoleTop / 2, 5.0));
+  for (const z of [3.4, 5.0, 6.6]) g.add(at(box(0.05, 1.2, 1.4, 0xa86f48, 0.04), 2.12, 0.95, z));
+  const tv = group(
+    at(box(0.5, 0.12, 1.2, DARK_TV, 0.04), 0, 0.06, 0),
+    at(box(0.12, 0.5, 0.2, DARK_TV), 0, 0.3, 0),
+    at(box(0.18, 2.0, 3.6, DARK_TV, 0.06), 0, 1.5, 0),
+  );
+  const screen = mesh(
+    new THREE.PlaneGeometry(3.3, 1.75),
+    texMat(
+      canvasTex(160, 90, (c) => {
+        const grd = c.createLinearGradient(0, 0, 160, 90);
+        grd.addColorStop(0, '#3a5a9a');
+        grd.addColorStop(1, '#6a4a9a');
+        c.fillStyle = grd;
+        c.fillRect(0, 0, 160, 90);
+      }),
+    ),
+  );
+  screen.rotation.y = Math.PI / 2;
+  screen.position.set(0.1, 1.5, 0);
+  tv.add(screen);
+  g.add(at(tv, 0.65, consoleTop, 5.0));
+
+  // Bookshelf in the back-right corner.
+  const shelfTop = 4.3;
+  const shelf = group(at(box(2.8, shelfTop, 1.4, 0xf3ede2, 0.05), 0, shelfTop / 2, 0));
+  for (const y of [1.4, 2.8]) shelf.add(at(box(2.6, 0.1, 1.2, 0xe2d6c2), 0, y, 0.1));
+  const spines = [0xd65a4a, 0x3f7fd0, 0xf0b84a, 0x3fa36b, 0x8a5ac8, 0xe45b8f, 0x2fb3c9];
+  for (const [row, y] of [
+    [0, 0.25],
+    [1, 1.5],
+    [2, 2.9],
+  ])
+    for (let i = 0; i < 6; i++) {
+      const h = 1.0 - ((i + row) % 3) * 0.12;
+      shelf.add(at(box(0.32, h, 1.0, spines[(i + row * 2) % spines.length], 0.03), -1.05 + i * 0.42, y + h / 2, 0.1));
+    }
+  g.add(at(shelf, 10.45, 0, 0.75));
+
+  // Floor lamp.
+  g.add(at(group(at(cyl(0.4, 0.45, 0.1, 0x3a3f4a), 0, 0.05, 0), at(cyl(0.05, 0.05, 4.2, 0x3a3f4a, 8), 0, 2.1, 0), at(cyl(0.45, 0.7, 0.9, 0xfaf3e6, 20), 0, 4.4, 0)), 11.3, 0, 2.6));
+
+  g.add(at(rug(6.8, 5.2, '#e9a77a', '#fbe6d0'), 6.3, 0.03, 6.6));
+
+  g.traverse((o) => {
+    if ((o as THREE.Mesh).isMesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+    }
+  });
+  return {
+    group: g,
+    surfaces: { sofa: seat, table: tableTop, console: consoleTop, shelf: shelfTop, rug: 0.06, floor: 0 },
+    focus: new THREE.Box3(new THREE.Vector3(0.6, 0, 0.3), new THREE.Vector3(11.8, 6.4, 9.6)),
+    background: 0xf2c48a,
+  };
+}
+
+const DARK_TV = 0x22252c;
+
+function darker(c: number, k = 0.75) {
+  return new THREE.Color(c).multiplyScalar(k).getHex();
+}
+
 export function buildRoom(id: RoomId): Room {
   switch (id) {
     case 'study':
@@ -434,5 +684,9 @@ export function buildRoom(id: RoomId): Room {
       return kitchen();
     case 'bedroom':
       return bedroom();
+    case 'bathroom':
+      return bathroom();
+    case 'living':
+      return living();
   }
 }

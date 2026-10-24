@@ -9,9 +9,14 @@ export type CategoryId =
   | 'clothes'
   | 'toys'
   | 'books'
-  | 'sports';
+  | 'sports'
+  | 'bath'
+  | 'grooming'
+  | 'cleaning'
+  | 'music'
+  | 'plants';
 
-export type RoomId = 'study' | 'kitchen' | 'bedroom';
+export type RoomId = 'study' | 'kitchen' | 'bedroom' | 'bathroom' | 'living';
 
 export interface ItemDef {
   id: string;

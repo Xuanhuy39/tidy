@@ -430,13 +430,6 @@ button {
   margin-top: 3px;
 }
 
-.level-card .done {
-  font-size: 13px;
-  font-weight: 700;
-  color: #2fa36b;
-  white-space: nowrap;
-}
-
 .menu-coins {
   display: inline-flex;
   align-items: center;
@@ -692,75 +685,58 @@ button {
   letter-spacing: 1px;
 }
 
-.tagline {
-  font-weight: 500;
-}
-
-.level-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.level-card {
-  display: flex;
-  align-items: center;
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  padding: 10px 14px;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 4px 0 #e6d3b4;
-  text-align: left;
+  margin: 18px auto 4px;
+  max-width: 280px;
 }
 
-.level-card:active:not(:disabled) {
-  transform: translateY(3px);
+.level-tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 20px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 34px;
+  font-weight: 700;
+  box-shadow: 0 5px 0 var(--accent-dark);
+  display: grid;
+  place-items: center;
+}
+
+.level-tile.cleared {
+  background: var(--teal);
+  box-shadow: 0 5px 0 var(--teal-dark);
+}
+
+.level-tile:active:not(:disabled) {
+  transform: translateY(4px);
   box-shadow: none;
 }
 
-.level-card .num {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  font-size: 22px;
-  font-weight: 700;
-  color: #fff;
-  background: var(--accent);
-  flex: none;
-}
-
-.level-card .info {
-  flex: 1;
-  min-width: 0;
-}
-
-.level-card .lname {
-  font-weight: 700;
-  font-size: 18px;
-}
-
-.level-card .lsub {
-  font-size: 13px;
-  color: var(--ink-soft);
-}
-
-.level-card:disabled {
-  opacity: 0.55;
+.level-tile:disabled {
+  background: #d9cbb4;
+  box-shadow: 0 5px 0 #c2b195;
+  font-size: 26px;
   cursor: default;
 }
 
-.level-card:disabled .num {
-  background: #b9a68c;
-}
-
-.how {
-  margin-top: 14px;
-  font-size: 13px;
-  color: var(--ink-soft);
-  line-height: 1.4;
+.level-tile .tick {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--teal-dark);
+  font-size: 15px;
+  font-style: normal;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 0 rgba(90, 58, 36, 0.2);
 }
 
 .sound-toggle {

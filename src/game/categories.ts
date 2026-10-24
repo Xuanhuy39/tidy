@@ -12,4 +12,9 @@ export const CATEGORIES: Record<CategoryId, CategoryInfo> = {
   toys: { name: 'Toys', color: '#f2b632', icon: '🧸' },
   books: { name: 'Books', color: '#3fa36b', icon: '📚' },
   sports: { name: 'Sports', color: '#e0703a', icon: '🏀' },
+  bath: { name: 'Bath', color: '#3fa9d6', icon: '🛁' },
+  grooming: { name: 'Grooming', color: '#d0679b', icon: '🧴' },
+  cleaning: { name: 'Cleaning', color: '#5aa83c', icon: '🧹' },
+  music: { name: 'Music', color: '#8a5ac8', icon: '🎸' },
+  plants: { name: 'Plants', color: '#3f9c5a', icon: '🪴' },
 };

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { HOME_MODELS, HOME_NAMES } from './models-home';
 import { at, box, canvasTex, cyl, group, lathe, mat, mesh, poly, roundedRect, scaled, slab, sph, texMat, torus, tube } from './kit';
 
 /**
@@ -1066,6 +1067,7 @@ function racket() {
 }
 
 export const MODELS: Record<string, Builder> = {
+  ...HOME_MODELS,
   pencil,
   ruler,
   setSquare,
@@ -1127,6 +1129,7 @@ export const MODELS: Record<string, Builder> = {
 };
 
 export const MODEL_NAMES: Record<string, string> = {
+  ...HOME_NAMES,
   speaker: 'Boombox',
   setSquare: 'Set square',
   penCup: 'Pen cup',

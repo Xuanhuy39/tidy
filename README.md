@@ -8,7 +8,7 @@ Coins: every player starts with **5,000** (saved in the browser) and earns **100
 
 The game always plays in a portrait phone-shaped frame (9:16); on a PC it sits centred in the window.
 
-Levels: **Study Nook** (17 items), **Cozy Kitchen** (22), **Messy Bedroom** (26). All items and rooms are built procedurally from three.js primitives with a cel-shaded, outlined look, so there are no model or texture files.
+Levels: **Study Nook** (17 items), **Cozy Kitchen** (22), **Messy Bedroom** (26), **Splashy Bathroom** (27) and **Living Room** (28). The menu shows just the level numbers; each unlocks when the previous one is cleared. All items and rooms are built procedurally from three.js primitives with a cel-shaded, outlined look, so there are no model or texture files.
 
 ## Run it locally
 
@@ -39,7 +39,8 @@ URL options:
 | ----------------------- | -------------------------------------------------------------------- |
 | `src/game/logic.ts`     | The rules (no rendering), the solver and a casual-player simulation  |
 | `src/game/levels.ts`    | Level data: categories in order, and where each item sits            |
-| `src/scene/models.ts`   | The 58 item models (review them at `/gallery.html` in dev)           |
+| `src/scene/models.ts`   | Item models for levels 1–3 (review all models at `/gallery.html`)    |
+| `src/scene/models-home.ts` | Item models for the Bathroom and Living Room                      |
 | `src/scene/rooms.ts`    | Room furniture and the surfaces items rest on                        |
 | `src/scene/stage.ts`    | Camera framing, picking and 3D animation                             |
 | `src/scene/thumbs.ts`   | Renders each model to a small icon for the boxes and tray            |

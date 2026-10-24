@@ -14,6 +14,8 @@ npm.cmd run dev
 | Level 1 — Study Nook | http://localhost:5173/?level=1 |
 | Level 2 — Cozy Kitchen | http://localhost:5173/?level=2 |
 | Level 3 — Messy Bedroom | http://localhost:5173/?level=3 |
+| Level 4 — Splashy Bathroom | http://localhost:5173/?level=4 |
+| Level 5 — Living Room | http://localhost:5173/?level=5 |
 | Menu with all levels unlocked | http://localhost:5173/?unlock |
 | Model gallery (every item, large and at icon size) | http://localhost:5173/gallery.html |
 
