@@ -5,13 +5,14 @@ import '@fontsource/fredoka/700.css';
 import './style.css';
 import { sfx } from './audio';
 import { CATEGORIES } from './game/categories';
+import { BOX_COST, REVIVE_COST, SLOT_COST } from './game/economy';
 import { LEVELS } from './game/levels';
 import { Game, MAX_BOXES, MAX_TRAY, type GameEvent } from './game/logic';
 import type { LevelDef } from './game/types';
 import { loadProgress, saveProgress } from './progress';
 import { Stage } from './scene/stage';
 import { Thumbs } from './scene/thumbs';
-import { Hud, overlay, starsHtml } from './ui/hud';
+import { Hud, overlay } from './ui/hud';
 
 const RETURNS_PER_LEVEL = 2;
 const HINTS_PER_LEVEL = 3;
@@ -30,10 +31,6 @@ let busy = false;
 let flights: Promise<void>[] = [];
 let returnsLeft = RETURNS_PER_LEVEL;
 let hintsLeft = HINTS_PER_LEVEL;
-let boostersUsed = 0;
-let startTime = 0;
-let elapsed = 0;
-let running = false;
 let closeOverlay: (() => void) | null = null;
 let hintTimer = 0;
 let blockedTips = 0;
@@ -77,13 +74,11 @@ function startLevel(index: number): void {
   stage.load(level);
   returnsLeft = RETURNS_PER_LEVEL;
   hintsLeft = HINTS_PER_LEVEL;
-  boostersUsed = 0;
-  elapsed = 0;
-  running = false;
   busy = false;
   flights = [];
   hud.setVisible(true);
   hud.setup(index + 1, level.name, game.boxes, game.traySize, game.boxSlots);
+  hud.setCoins(progress.coins);
   refreshSide();
   layout();
   // Warm the thumbnail cache so the first flights don't stutter.
@@ -98,8 +93,18 @@ function refreshSide(): void {
   hud.updateTrayWarn(game.tray.length);
 }
 
-function starsFor(used: number): number {
-  return used === 0 ? 3 : used <= 2 ? 2 : 1;
+/** Take coins for a purchase; false (with feedback) if the player can't afford it. */
+function spend(cost: number): boolean {
+  if (progress.coins < cost) {
+    sfx.blocked();
+    hud.shakeCoins();
+    hud.toast(`Not enough coins (need ${cost})`);
+    return false;
+  }
+  progress.coins -= cost;
+  saveProgress(progress);
+  hud.setCoins(progress.coins, -cost);
+  return true;
 }
 
 // ---------- Input ----------
@@ -143,10 +148,6 @@ async function tapItem(id: string): Promise<void> {
       hud.toast('Tray is full!');
     }
     return;
-  }
-  if (!running) {
-    running = true;
-    startTime = performance.now() - elapsed * 1000;
   }
   clearHint();
   sfx.pick();
@@ -259,12 +260,11 @@ const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 // ---------- Boosters ----------
 
-async function runBooster(events: GameEvent[] | null, cost = true): Promise<boolean> {
+async function runBooster(events: GameEvent[] | null): Promise<boolean> {
   if (!events) return false;
   closeOverlay?.();
   closeOverlay = null;
   sfx.booster();
-  if (cost) boostersUsed++;
   busy = true;
   await Promise.all(flights);
   await playEvents(events);
@@ -282,16 +282,24 @@ async function useReturn(): Promise<void> {
 }
 
 async function useSlot(): Promise<void> {
-  if (busy && !closeOverlay) return;
-  if (game.traySize >= MAX_TRAY) return;
+  if (busy || closeOverlay || game.status !== 'playing') return;
+  if (game.traySize >= MAX_TRAY || !spend(SLOT_COST)) return;
   await runBooster(game.addTraySlot());
   hud.toast('+1 tray slot');
 }
 
+/** Lose-screen revive: pay for one more tray slot and keep playing. */
+async function revive(): Promise<void> {
+  if (game.status !== 'lost' || game.traySize >= MAX_TRAY || !spend(REVIVE_COST)) return;
+  await runBooster(game.addTraySlot());
+  hud.toast('Revived with +1 tray slot!');
+}
+
 async function useBox(): Promise<void> {
-  if (busy && !closeOverlay) return;
+  if (busy || closeOverlay || game.status !== 'playing') return;
   if (game.boxSlots >= MAX_BOXES) return;
   if (game.queue.length === 0) return hud.toast('No more boxes to open');
+  if (!spend(BOX_COST)) return;
   hud.unlockBox(game.boxSlots + 1);
   await runBooster(game.addBox());
 }
@@ -309,7 +317,6 @@ function useHint(): void {
     }) ?? null;
   }
   if (!id) return hud.toast('No good move — try a booster');
-  // Hints don't cost stars; they only point at a move.
   hintsLeft--;
   stage.setHint(id);
   clearTimeout(hintTimer);
@@ -327,23 +334,23 @@ function clearHint(): void {
 function showMenu(): void {
   closeOverlay?.();
   hud.setVisible(false);
-  running = false;
   stage.load(LEVELS[Math.min(levelIndex, LEVELS.length - 1)]);
   layout();
   const cards = LEVELS.map((l, i) => {
     const unlocked = i === 0 || (progress.stars[LEVELS[i - 1].id] ?? 0) > 0 || params.has('unlock');
-    const stars = progress.stars[l.id] ?? 0;
+    const cleared = (progress.stars[l.id] ?? 0) > 0;
     const cats = l.queue.map((c) => CATEGORIES[c].icon).join(' ');
     return `<button class="level-card" data-i="${i}" ${unlocked ? '' : 'disabled'}>
       <span class="num">${unlocked ? i + 1 : '🔒'}</span>
       <span class="info"><div class="lname">${l.name}</div><div class="lsub">${l.items.length} items · ${cats}</div></span>
-      <span class="lstars">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3 - stars)}</span></span>
+      ${cleared ? '<span class="done">✓ Cleared</span>' : ''}
     </button>`;
   }).join('');
   closeOverlay = overlay(
     hudRoot,
     `<div class="logo">Tidy Up!</div>
      <p class="tagline">A cozy sorting puzzle</p>
+     <div class="menu-coins"><i class="coin"></i>${progress.coins.toLocaleString('en-US')}</div>
      <div class="level-list">${cards}</div>
      <div class="how">Tap items to drop them into matching boxes. Items with nothing to go in wait in the tray — if the tray fills up, you lose! Things underneath can't be picked until what's on top is cleared.</div>
      <button class="sound-toggle">${sfx.muted ? '🔇 Sound off' : '🔊 Sound on'}</button>`,
@@ -370,16 +377,10 @@ function showMenu(): void {
 
 function showPause(): void {
   if (closeOverlay) return;
-  const wasRunning = running;
-  running = false;
   sfx.click();
   const resume = () => {
     closeOverlay?.();
     closeOverlay = null;
-    if (wasRunning) {
-      running = true;
-      startTime = performance.now() - elapsed * 1000;
-    }
   };
   closeOverlay = overlay(hudRoot, `<h2>Paused</h2><p>${LEVELS[levelIndex].name}</p>`, [
     { label: 'Resume', onClick: resume },
@@ -400,55 +401,43 @@ function showPause(): void {
 }
 
 function showWin(): void {
-  running = false;
   sfx.win();
   hud.setNext(null, -1);
   const level = LEVELS[levelIndex];
-  const stars = starsFor(boostersUsed);
-  progress.stars[level.id] = Math.max(progress.stars[level.id] ?? 0, stars);
+  progress.stars[level.id] = Math.max(progress.stars[level.id] ?? 0, 1);
   saveProgress(progress);
-  const last = levelIndex === LEVELS.length - 1;
-  const t = Math.floor(elapsed);
+  // After the last room, "Next" goes back to the first one.
+  const next = (levelIndex + 1) % LEVELS.length;
   closeOverlay = overlay(
     hudRoot,
-    `<h2>Room tidied!</h2>${starsHtml(stars)}
-     <div class="stat-row"><span>⏱ ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</span><span>🧺 ${level.items.length} items</span></div>
-     <p>${stars === 3 ? 'Perfect — no boosters needed!' : 'Finish without boosters for 3 stars.'}</p>
-     ${last ? '<p><b>You cleaned every room!</b> More rooms coming soon.</p>' : ''}`,
+    `<div class="result-badge">🎉</div><h2>Congratulations!</h2><p>${level.name} is all tidy.</p>`,
     [
-      last ? { label: 'Level select', onClick: showMenu } : { label: 'Next level', onClick: () => startLevel(levelIndex + 1) },
-      { label: 'Play again', kind: 'ghost', onClick: () => startLevel(levelIndex) },
+      { label: 'Next', onClick: () => startLevel(next) },
+      { label: 'Quit', kind: 'ghost', onClick: showMenu },
     ],
+    'result',
   );
 }
 
 function showLose(): void {
-  running = false;
   sfx.lose();
-  const canSlot = game.traySize < MAX_TRAY;
-  // An extra box only rescues you if the next category pulls something out of the tray.
-  const canBox = game.boxSlots < MAX_BOXES && game.tray.some((id) => game.def(id).cat === game.queue[0]);
-  const canReturn = returnsLeft > 0 && game.tray.length > 0;
-  const resumeTimer = () => {
-    running = true;
-    startTime = performance.now() - elapsed * 1000;
-  };
-  closeOverlay = overlay(hudRoot, `<h2>Tray full!</h2><p>Every tray slot is taken. Use a booster to keep going, or try again.</p>`, [
-    ...(canSlot ? [{ label: '+1 Tray slot', kind: 'secondary' as const, onClick: () => void useSlot().then(resumeTimer) }] : []),
-    ...(canReturn ? [{ label: `↩ Return 3 items (${returnsLeft} left)`, kind: 'secondary' as const, onClick: () => void useReturn().then(resumeTimer) }] : []),
-    ...(canBox ? [{ label: '+ Extra box', kind: 'secondary' as const, onClick: () => void useBox().then(resumeTimer) }] : []),
-    { label: 'Try again', onClick: () => startLevel(levelIndex) },
-    { label: 'Level select', kind: 'ghost', onClick: showMenu },
-  ]);
+  const canRevive = game.traySize < MAX_TRAY;
+  const price = `<span class="price"><i class="coin"></i>${REVIVE_COST}</span>`;
+  const text = canRevive ? 'Revive with one more tray slot and keep tidying.' : 'There are no tray slots left to add.';
+  closeOverlay = overlay(
+    hudRoot,
+    `<div class="result-badge">📦</div><h2>Tray full!</h2><p>${text}</p>`,
+    [
+      { label: `Revive${price}`, kind: 'secondary', disabled: !canRevive, onClick: () => void revive() },
+      { label: 'Try Again', onClick: () => startLevel(levelIndex) },
+    ],
+    'result',
+  );
 }
 
 // ---------- Loop ----------
 
 function frame(now: number): void {
-  if (running) {
-    elapsed = (now - startTime) / 1000;
-    hud.setTimer(elapsed);
-  }
   stage.frame(now);
   requestAnimationFrame(frame);
 }

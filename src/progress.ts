@@ -1,19 +1,23 @@
+import { START_COINS } from './game/economy';
+
 const KEY = 'tidy-up-progress-v1';
 
 export interface Progress {
-  /** Best stars per level id (0 = not cleared). */
+  /** Levels cleared (by id); a value above 0 means cleared. */
   stars: Record<string, number>;
   muted: boolean;
+  coins: number;
 }
 
 export function loadProgress(): Progress {
+  const fresh: Progress = { stars: {}, muted: false, coins: START_COINS };
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { stars: {}, muted: false, ...JSON.parse(raw) };
+    if (raw) return { ...fresh, ...JSON.parse(raw) };
   } catch {
     // Storage can be blocked (private mode); play without saving.
   }
-  return { stars: {}, muted: false };
+  return fresh;
 }
 
 export function saveProgress(p: Progress): void {

@@ -1,4 +1,5 @@
 import { CATEGORIES } from '../game/categories';
+import { BOX_COST, SLOT_COST } from '../game/economy';
 import { BASE_BOXES, BASE_TRAY, MAX_BOXES, MAX_TRAY, type Box } from '../game/logic';
 import type { CategoryId } from '../game/types';
 import type { ScreenRect } from '../scene/stage';
@@ -29,7 +30,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = ''):
 export class Hud {
   readonly root: HTMLElement;
   private readonly title = el('div', 'level-pill');
-  private readonly timer = el('div', 'timer-pill', '0:00');
+  private readonly coins = el('div', 'coin-pill', '<i class="coin"></i><span>0</span>');
   private readonly boxEls: HTMLElement[] = [];
   private readonly boxCounts: number[] = [0, 0, 0];
   private readonly boxCaps: number[] = [0, 0, 0];
@@ -51,7 +52,7 @@ export class Hud {
     const pause = el('button', 'round-btn', '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg>');
     pause.setAttribute('aria-label', 'Pause');
     pause.onclick = () => h.onPause();
-    bar.append(pause, this.title, this.timer);
+    bar.append(pause, this.title, this.coins);
 
     const boxes = el('div', 'boxes');
     for (let i = 0; i < MAX_BOXES; i++) {
@@ -84,7 +85,6 @@ export class Hud {
     this.boxSlots = boxSlots;
     for (let i = 0; i < MAX_BOXES; i++) this.drawBox(i, boxes[i]);
     this.setTray([]);
-    this.setTimer(0);
   }
 
   setVisible(on: boolean): void {
@@ -100,7 +100,7 @@ export class Hud {
     e.onclick = null;
     if (slot >= this.boxSlots) {
       e.classList.add('locked');
-      e.innerHTML = `<div class="lock-inner"><span class="plus">+</span><span>Extra box</span></div>`;
+      e.innerHTML = `<div class="lock-inner"><span class="plus">+</span><span>Extra box</span><span class="price"><i class="coin"></i>${BOX_COST}</span></div>`;
       e.onclick = () => this.h.onAddBox();
       return;
     }
@@ -195,7 +195,7 @@ export class Hud {
       s.innerHTML = '';
       if (i >= this.traySize) {
         s.classList.add('locked');
-        s.innerHTML = '<span class="plus">+</span>';
+        s.innerHTML = `<span class="plus">+</span><span class="price"><i class="coin"></i>${SLOT_COST}</span>`;
         s.onclick = () => this.h.onAddSlot();
       } else if (items[i]) this.fillSlot(i, items[i]);
     });
@@ -252,9 +252,25 @@ export class Hud {
     this.hintBtn.classList.toggle('disabled', hints <= 0);
   }
 
-  setTimer(sec: number): void {
-    const s = Math.floor(sec);
-    this.timer.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  /** Show the coin balance; a non-zero `change` floats a "+/-N" next to it. */
+  setCoins(total: number, change = 0): void {
+    this.coins.querySelector('span')!.textContent = total.toLocaleString('en-US');
+    if (!change) return;
+    this.coins.classList.remove('bump');
+    void this.coins.offsetWidth;
+    this.coins.classList.add('bump');
+    const r = this.coins.getBoundingClientRect();
+    const f = el('div', `coin-float ${change < 0 ? 'spend' : 'earn'}`, `${change > 0 ? '+' : '−'}${Math.abs(change)}`);
+    f.style.left = `${r.left + r.width / 2}px`;
+    f.style.top = `${r.bottom + 4}px`;
+    this.root.append(f);
+    setTimeout(() => f.remove(), 900);
+  }
+
+  shakeCoins(): void {
+    this.coins.classList.remove('shake');
+    void this.coins.offsetWidth;
+    this.coins.classList.add('shake');
   }
 
   toast(msg: string, ms = 1600): void {
@@ -323,10 +339,4 @@ export function overlay(root: HTMLElement, html: string, buttons: OverlayButton[
     wrap.classList.remove('show');
     setTimeout(() => wrap.remove(), 220);
   };
-}
-
-export function starsHtml(n: number, max = 3): string {
-  let s = '';
-  for (let i = 0; i < max; i++) s += `<span class="star ${i < n ? 'on' : ''}" style="--i:${i}">★</span>`;
-  return `<div class="stars">${s}</div>`;
 }

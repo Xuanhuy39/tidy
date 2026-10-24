@@ -124,7 +124,7 @@ button {
 }
 
 .level-pill,
-.timer-pill {
+.coin-pill {
   background: var(--panel);
   border-radius: 20px;
   padding: 7px 14px;
@@ -142,10 +142,63 @@ button {
   min-width: 0;
 }
 
-.timer-pill {
+.coin-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-variant-numeric: tabular-nums;
-  min-width: 64px;
-  text-align: center;
+  min-width: 84px;
+  justify-content: center;
+}
+
+.coin-pill.bump {
+  animation: bump 0.3s;
+}
+
+.coin-pill.shake {
+  animation: shake 0.35s;
+  color: var(--danger);
+}
+
+/* A drawn coin, so it looks the same on every platform. */
+.coin {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3b0 0 18%, #ffd23f 19% 55%, #e9a91c 56%);
+  box-shadow: inset 0 0 0 1.5px #b9790f;
+  flex: none;
+  vertical-align: -0.12em;
+}
+
+.price {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.coin-float {
+  position: fixed;
+  transform: translateX(-50%);
+  font-weight: 700;
+  font-size: 18px;
+  pointer-events: none;
+  z-index: 30;
+  animation: coin-float 0.9s ease-out forwards;
+  -webkit-text-stroke: 3px var(--cream);
+  paint-order: stroke fill;
+}
+
+.coin-float.spend {
+  color: var(--danger);
+}
+
+.coin-float.earn {
+  color: #2fa36b;
 }
 
 /* ---------- Boxes ---------- */
@@ -355,9 +408,58 @@ button {
   cursor: pointer;
 }
 
+.slot.locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
 .slot.locked .plus {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
+  line-height: 0.9;
+}
+
+.slot.locked .price {
+  font-size: 10px;
+}
+
+.box.locked .price {
+  margin-top: 3px;
+}
+
+.level-card .done {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2fa36b;
+  white-space: nowrap;
+}
+
+.menu-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 5px 14px;
+  border-radius: 16px;
+  background: #fff;
+  font-weight: 700;
+  box-shadow: 0 3px 0 #e6d3b4;
+}
+
+.btn .price {
+  font-size: 15px;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
+  vertical-align: 1px;
+}
+
+.btn:disabled .price {
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .slot.unlocking {
@@ -567,33 +669,6 @@ button {
   opacity: 0.45;
 }
 
-.stars {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin: 6px 0 4px;
-}
-
-.star {
-  font-size: 46px;
-  color: #e6d6bc;
-  -webkit-text-stroke: 2px rgba(90, 58, 36, 0.35);
-}
-
-.star.on {
-  color: #ffc93c;
-  -webkit-text-stroke: 2px var(--ink);
-  animation: star-in 0.45s calc(var(--i) * 0.18s + 0.2s) both cubic-bezier(0.3, 1.8, 0.5, 1);
-}
-
-.stat-row {
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-  font-weight: 600;
-  margin-top: 4px;
-}
-
 /* Title screen */
 
 .overlay.menu {
@@ -672,19 +747,6 @@ button {
   color: var(--ink-soft);
 }
 
-.level-card .lstars {
-  font-size: 18px;
-  color: #ffc93c;
-  -webkit-text-stroke: 1px var(--ink);
-  letter-spacing: 1px;
-  white-space: nowrap;
-}
-
-.level-card .lstars .off {
-  color: #e6d6bc;
-  -webkit-text-stroke: 1px rgba(90, 58, 36, 0.3);
-}
-
 .level-card:disabled {
   opacity: 0.55;
   cursor: default;
@@ -710,6 +772,17 @@ button {
 }
 
 /* ---------- Keyframes ---------- */
+
+@keyframes coin-float {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, 22px);
+  }
+}
 
 @keyframes bump {
   40% {
@@ -789,12 +862,6 @@ button {
   }
 }
 
-@keyframes star-in {
-  from {
-    transform: scale(0) rotate(-40deg);
-  }
-}
-
 @media (max-width: 380px) {
   .box-label {
     font-size: 13px;
@@ -805,4 +872,26 @@ button {
   .level-pill {
     font-size: 13px;
   }
+}
+
+/* Win / lose popups */
+
+.result .card {
+  padding-top: 20px;
+}
+
+.result-badge {
+  font-size: 54px;
+  line-height: 1;
+  margin-bottom: 6px;
+  animation: pop 0.45s 0.1s both;
+}
+
+.result .card-buttons {
+  flex-direction: row;
+}
+
+.result .btn {
+  flex: 1;
+  white-space: nowrap;
 }
