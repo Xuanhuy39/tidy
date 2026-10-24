@@ -5,7 +5,7 @@ import '@fontsource/fredoka/700.css';
 import './style.css';
 import { sfx } from './audio';
 import { CATEGORIES } from './game/categories';
-import { BOX_COST, REVIVE_COST, SLOT_COST } from './game/economy';
+import { BOX_COST, REVIVE_COST, SLOT_COST, WIN_REWARD } from './game/economy';
 import { LEVELS } from './game/levels';
 import { Game, MAX_BOXES, MAX_TRAY, type GameEvent } from './game/logic';
 import type { LevelDef } from './game/types';
@@ -405,12 +405,14 @@ function showWin(): void {
   hud.setNext(null, -1);
   const level = LEVELS[levelIndex];
   progress.stars[level.id] = Math.max(progress.stars[level.id] ?? 0, 1);
+  progress.coins += WIN_REWARD;
   saveProgress(progress);
+  hud.setCoins(progress.coins, WIN_REWARD);
   // After the last room, "Next" goes back to the first one.
   const next = (levelIndex + 1) % LEVELS.length;
   closeOverlay = overlay(
     hudRoot,
-    `<div class="result-badge">🎉</div><h2>Congratulations!</h2><p>${level.name} is all tidy.</p>`,
+    `<div class="result-badge">🎉</div><h2>Congratulations!</h2><p>${level.name} is all tidy.</p><div class="reward">+${WIN_REWARD} <i class="coin"></i></div>`,
     [
       { label: 'Next', onClick: () => startLevel(next) },
       { label: 'Quit', kind: 'ghost', onClick: showMenu },

@@ -6,3 +6,5 @@ export const SLOT_COST = 200;
 export const BOX_COST = 500;
 /** Revive after a full tray: same as buying a slot, since that's what it gives you. */
 export const REVIVE_COST = SLOT_COST;
+/** Coins for clearing a level (every clear, replays included). */
+export const WIN_REWARD = 100;

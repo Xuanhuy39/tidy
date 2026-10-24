@@ -4,7 +4,7 @@ A cozy 3D sorting puzzle for the browser, built with three.js, TypeScript and Vi
 
 Tap the clutter in a room to tidy it. Each item flies into the open box for its category (Snacks, Stationery, Electronics …). If no open box takes it, it waits in the tray. When a box fills it closes and the next category's box opens in its place, pulling any matching items out of the tray. Items with something resting on top can't be picked until that's cleared. The tray holds 5 items; filling the last slot loses the level.
 
-Coins: every player starts with **5,000** (saved in the browser). The locked **+** tray slots cost **200** each and **Extra box** (opens a third category box early) costs **500**. When the tray fills you can **Revive** for 200 coins, which adds one tray slot, or **Try Again**. Free boosters: **Return** puts the last 3 tray items back in the room (2 per level) and **Hint** points at a good move (3 per level). Costs live in `src/game/economy.ts`.
+Coins: every player starts with **5,000** (saved in the browser) and earns **100** for every level cleared. The locked **+** tray slots cost **200** each and **Extra box** (opens a third category box early) costs **500**. When the tray fills you can **Revive** for 200 coins, which adds one tray slot, or **Try Again**. Free boosters: **Return** puts the last 3 tray items back in the room (2 per level) and **Hint** points at a good move (3 per level). Costs live in `src/game/economy.ts`.
 
 The game always plays in a portrait phone-shaped frame (9:16); on a PC it sits centred in the window.
 

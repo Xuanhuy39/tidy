@@ -895,3 +895,18 @@ button {
   flex: 1;
   white-space: nowrap;
 }
+
+.reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 16px;
+  border-radius: 18px;
+  background: #fff4cf;
+  box-shadow: 0 3px 0 #ecd28a;
+  font-size: 22px;
+  font-weight: 700;
+  color: #b9790f;
+  animation: pop 0.45s 0.35s both;
+}
