@@ -407,18 +407,58 @@ function apple() {
   return group(body, at(cyl(0.035, 0.04, 0.3, 0x6b4a2b, 8), 0.02, 0.95, 0, 0, 0, -10), leaf(0.16, 1.0, 0));
 }
 
+/** One banana lying flat: a curved, tapered, slightly ridged sweep from stem (origin) to tip. */
+function bananaFinger(): THREE.Group {
+  const len = 1.9;
+  const bend = 1.15;
+  const curve = new THREE.CatmullRomCurve3(
+    Array.from({ length: 9 }, (_, i) => {
+      const a = (i / 8) * (len / bend);
+      return new THREE.Vector3(Math.sin(a) * bend, 0.06 * Math.sin((i / 8) * Math.PI), (1 - Math.cos(a)) * bend);
+    }),
+  );
+  const tubular = 48;
+  const radial = 6; // a few flat sides give the ridged banana look
+  const geo = new THREE.TubeGeometry(curve, tubular, 0.2, radial, false);
+  const pos = geo.getAttribute('position');
+  for (let i = 0; i <= tubular; i++) {
+    const t = i / tubular;
+    const c = curve.getPointAt(t);
+    const taper = Math.max(0.22, Math.sin(Math.PI * Math.min(1, 0.08 + t * 0.92)) ** 0.5);
+    for (let j = 0; j <= radial; j++) {
+      const k = i * (radial + 1) + j;
+      const v = new THREE.Vector3().fromBufferAttribute(pos, k).sub(c).multiplyScalar(taper).add(c);
+      pos.setXYZ(k, v.x, v.y, v.z);
+    }
+  }
+  geo.computeVertexNormals();
+  const tip = curve.getPointAt(1);
+  const tipDir = curve.getTangentAt(1);
+  const stemDir = curve.getTangentAt(0).negate();
+  const stem = cyl(0.05, 0.07, 0.32, 0x8a9a3a, 8);
+  stem.position.copy(stemDir.clone().multiplyScalar(0.14));
+  stem.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), stemDir);
+  const nub = sph(0.055, 0x4a3420, 8);
+  nub.position.copy(tip).addScaledVector(tipDir, 0.02);
+  return group(mesh(geo, 0xf7d046), stem, nub);
+}
+
 function banana() {
-  const pts: [number, number, number][] = [
-    [-0.8, 0.45, 0],
-    [-0.45, 0.22, 0],
-    [0, 0.17, 0],
-    [0.45, 0.22, 0],
-    [0.8, 0.45, 0],
-  ];
-  const g = group(scaled(tube(pts, 0.22, 0xf7d046), 1, 1, 1.1));
-  g.add(at(cyl(0.05, 0.07, 0.2, 0x7a5a2a, 8), -0.88, 0.52, 0, 0, 0, 40));
-  g.add(at(sph(0.06, 0x5a4020, 8), 0.86, 0.5, 0));
-  return group(at(g, 0, 0, 0, 90, 0, 0));
+  // A small bunch of three, fanned out from a shared stem: the classic banana silhouette.
+  const g = new THREE.Group();
+  [
+    [-24, 0],
+    [0, 0.16],
+    [24, 0],
+  ].forEach(([deg, lift]) => {
+    const f = bananaFinger();
+    f.rotation.y = THREE.MathUtils.degToRad(deg);
+    f.position.y = lift;
+    g.add(f);
+  });
+  g.add(at(cyl(0.11, 0.13, 0.3, 0x6b7a2a, 10), -0.28, 0.12, 0, 0, 0, 90));
+  g.add(at(cyl(0.12, 0.12, 0.05, 0x4a3420, 10), -0.44, 0.12, 0, 0, 0, 90));
+  return g;
 }
 
 function orange() {
